@@ -148,6 +148,20 @@ class SpamExperts_API {
         $results = array();
         $mxes = '';
 
+        // each domain in the spamfilter has at least one destination route a hostname where all the
+        // clean email should be delivered and it is reasonable to use actual MX records on a
+        // domain’s MX records switching as a destination for the clean email.
+        if (!$conf->get('use_existing_mx_as_routes')){
+            $defaultMXes = array();
+            if ($conf->get('primary_mx'))
+                $defaultMXes[] = $conf->get('primary_mx');
+            if ($conf->get('secondary_mx'))
+                $defaultMXes[] = $conf->get('secondary_mx');
+            if ($conf->get('tertiary_mx'))
+                $defaultMXes[] = $conf->get('tertiary_mx');
+            $mxes = implode('","', $defaultMXes);
+        }
+
         // load domains if checking is required
         if (!$conf->get('process_addon_and_parked_domains') || $conf->get('do_not_protect_remote_domains')){
             $allDomains = $daApi->getAllDomains();
@@ -167,19 +181,7 @@ class SpamExperts_API {
                 }
             }
 
-            // each domain in the spamfilter has at least one destination route a hostname where all the
-            // clean email should be delivered and it is reasonable to use actual MX records on a
-            // domain’s MX records switching as a destination for the clean email.
-            if (!$conf->get('use_existing_mx_as_routes')){
-                $defaultMXes = array();
-                if ($conf->get('primary_mx'))
-                    $defaultMXes[] = $conf->get('primary_mx') == 'mail' ? $conf->get('primary_mx').'.'.$domain : $conf->get('primary_mx');
-                if ($conf->get('secondary_mx'))
-                    $defaultMXes[] = $conf->get('secondary_mx') == 'mail' ? $conf->get('secondary_mx').'.'.$domain : $conf->get('secondary_mx');
-                if ($conf->get('tertiary_mx'))
-                    $defaultMXes[] = $conf->get('tertiary_mx') == 'mail' ? $conf->get('tertiary_mx').'.'.$domain : $conf->get('tertiary_mx');
-                $mxes = implode('","', $defaultMXes);
-            } else {
+            if ($conf->get('use_existing_mx_as_routes')){
                 try {
                     $records = array();
                     $mxrecords = $daApi->getDomainsMxRecords($domain);
