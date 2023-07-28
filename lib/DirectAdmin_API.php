@@ -92,6 +92,9 @@ class DirectAdmin_API {
                     }
                 }
 
+                // custom override
+                if(strpos($fixedRecord, 'mijn.host') !== false) $isRemote = FALSE;
+
                 $records[] = array(
                     'original'	=> $fixedRecord,
                     'full'		=> substr($fixedRecord, -1) == '.' ? substr($fixedRecord, 0, -1) : $fixedRecord . '.' . $domain,
