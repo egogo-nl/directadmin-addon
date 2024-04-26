@@ -169,7 +169,7 @@ class DirectAdmin_API {
                             if ($pointer){
                                 if ($searchDomain && strpos($pointer, $searchDomain) === false)
                                     continue;
-                                if ($searchUsername && strpos($username, $searchUsername) === false)
+                                if ($searchUsername && $username != $searchUsername)
                                     continue;
                                 if ($searchReseller && strpos($details['creator'], $searchReseller) === false)
                                     continue;
