@@ -26,8 +26,7 @@
  * @author Grzegorz Draganik <grzegorz@modulesgarden.com>
  */
 
-class SpamExperts_API {
-
+class SpamExperts_API 
     protected $_host;
     protected $_port;
     protected $_login;
@@ -146,19 +145,6 @@ class SpamExperts_API {
      */
     public function protectDomains(array $domains, Configuration $conf, DirectAdmin_API $daApi){
         $results = array();
-        $mxes = '';
-
-        // each domain in the spamfilter has at least one destination route a hostname where all the
-        // clean email should be delivered and it is reasonable to use actual MX records on a
-        // domain’s MX records switching as a destination for the clean email.
-        $defaultMXes = array();
-        if ($conf->get('primary_mx'))
-            $defaultMXes[] = $conf->get('primary_mx');
-        if ($conf->get('secondary_mx'))
-            $defaultMXes[] = $conf->get('secondary_mx');
-        if ($conf->get('tertiary_mx'))
-            $defaultMXes[] = $conf->get('tertiary_mx');
-        $mxes = implode('","', $defaultMXes);
 
         // load domains if checking is required
         if (!$conf->get('process_addon_and_parked_domains') || $conf->get('do_not_protect_remote_domains')){
@@ -179,17 +165,22 @@ class SpamExperts_API {
                 }
             }
 
+            // use the domain itself as the default destination route
+            $mxes = "$domain";
+
+            // each domain in the spamfilter has at least one destination route a hostname where all the
+            // clean email should be delivered and it is reasonable to use actual MX records on a
+            // domain’s MX records switching as a destination for the clean email.
             if ($conf->get('use_existing_mx_as_routes')){
                 try {
-                    $records = array();
                     $mxrecords = $daApi->getDomainsMxRecords($domain);
-                    foreach ($mxrecords as $rec)
-                        $records[] = $rec['full'];
 
-                    // destination can't be the same as new mx record(s), fallback to mail.[domain] as destination
-                    if ($records == $defaultMXes) $records = ['mail.'.$domain];
+                    if (count($mxrecords)) {
+                        $mxes = implode('","', array_map(function ($mxrecord) {
+                            return $mxrecord['full'];
+                        }, $mxrecords));
+                    }
 
-                    $mxes = implode('","', $records);
                 } catch (Exception $e){}
             }
             $sock = $this->_getSocket();
